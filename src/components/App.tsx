@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { Workout, Run, WeightEntry, AppData } from "@/lib/types";
-import { fmtDate, fmtDateShort, todayISO } from "@/lib/format";
+import { fmtDate, todayISO } from "@/lib/format";
 import { Stat, Empty, Button } from "./ui";
 import { Sheet } from "./Sheet";
 import { WorkoutForm } from "./WorkoutForm";
@@ -12,8 +12,10 @@ import { WeightForm } from "./WeightForm";
 import { WorkoutCard, RunCard } from "./EntryCards";
 import { WorkoutDetail, RunDetail } from "./Detail";
 import { LineChart } from "./LineChart";
+import { Coach } from "./Coach";
+import { Progress } from "./Progress";
 
-type Tab = "home" | "history" | "weight";
+type Tab = "home" | "history" | "progress" | "coach";
 type SheetState =
   | { type: "none" }
   | { type: "newWorkout" }
@@ -65,7 +67,9 @@ export function App() {
     const wkStart = startOfWeek().getTime();
     const inWeek = (iso: string) =>
       new Date(iso + "T00:00:00").getTime() >= wkStart;
-    const workoutsThisWeek = data.workouts.filter((w) => inWeek(w.date)).length;
+    const workoutsThisWeek = data.workouts.filter(
+      (w) => !w.planned && inWeek(w.date)
+    ).length;
     const runsThisWeek = data.runs.filter((r) => inWeek(r.date)).length;
     const latestWeight = weightsSorted[weightsSorted.length - 1]?.weight;
     const firstWeight = weightsSorted[0]?.weight;
@@ -120,13 +124,14 @@ export function App() {
         {tab === "history" && (
           <HistoryView timeline={timeline} onView={(s) => setSheet(s)} />
         )}
-        {tab === "weight" && (
-          <WeightView
-            weights={weightsSorted}
-            onAdd={() => setSheet({ type: "newWeight" })}
-            onDelete={delWeight}
+        {tab === "progress" && (
+          <Progress
+            data={data}
+            onAddWeight={() => setSheet({ type: "newWeight" })}
+            onDeleteWeight={delWeight}
           />
         )}
+        {tab === "coach" && <Coach data={data} onSavePlan={saveWorkout} />}
       </main>
 
       {/* FAB */}
@@ -146,7 +151,8 @@ export function App() {
           [
             ["home", "Home", "🏠"],
             ["history", "History", "📋"],
-            ["weight", "Weight", "⚖️"],
+            ["progress", "Progress", "📈"],
+            ["coach", "Coach", "🤖"],
           ] as const
         ).map(([id, label, icon]) => (
           <button
@@ -425,59 +431,6 @@ function HistoryView({
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function WeightView({
-  weights,
-  onAdd,
-  onDelete,
-}: {
-  weights: WeightEntry[];
-  onAdd: () => void;
-  onDelete: (id: string) => void;
-}) {
-  const reversed = [...weights].reverse();
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">Bodyweight</h2>
-        <Button onClick={onAdd}>+ Log</Button>
-      </div>
-      {weights.length >= 2 ? (
-        <div className="rounded-2xl bg-card border border-line p-4">
-          <LineChart
-            points={weights.map((w) => ({ x: w.date, y: w.weight }))}
-            unit="kg"
-            height={180}
-          />
-        </div>
-      ) : (
-        <Empty>Log at least 2 weigh-ins to see your trend.</Empty>
-      )}
-      <div className="space-y-2">
-        {reversed.map((w) => (
-          <div
-            key={w.id}
-            className="flex items-center justify-between rounded-xl bg-card border border-line px-4 py-3"
-          >
-            <div>
-              <div className="font-semibold tabular-nums">{w.weight} kg</div>
-              <div className="text-xs text-muted">
-                {fmtDateShort(w.date)}
-                {w.notes ? ` · ${w.notes}` : ""}
-              </div>
-            </div>
-            <button
-              onClick={() => onDelete(w.id)}
-              className="text-sm text-red-400/80 active:opacity-60"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

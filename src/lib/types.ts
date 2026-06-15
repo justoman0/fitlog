@@ -20,6 +20,7 @@ export type Workout = {
   food?: string;
   rating?: Rating;
   notes?: string;
+  planned?: boolean; // AI-proposed, not yet performed
   createdAt: number;
 };
 

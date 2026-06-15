@@ -25,6 +25,11 @@ export function WorkoutCard({
             <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
               Strength
             </span>
+            {w.planned && (
+              <span className="rounded-full bg-accent2/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent2">
+                Planned
+              </span>
+            )}
           </div>
           <h3 className="mt-0.5 font-semibold">{w.title}</h3>
           <p className="text-xs text-muted">{fmtDate(w.date)}</p>
