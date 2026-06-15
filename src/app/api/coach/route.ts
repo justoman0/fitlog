@@ -113,11 +113,14 @@ export async function POST(req: Request) {
             content:
               "You are an elite, no-nonsense strength & conditioning coach. " +
               "You write like a knowledgeable gym coach texting a client: warm, specific, honest. " +
-              "Reference the athlete's actual numbers. Then recommend what to train TOMORROW and ask them to choose. " +
+              "Reference the athlete's actual numbers and what they trained MOST RECENTLY. " +
+              "Then give them EXACTLY 3 options for tomorrow and let them choose. " +
+              "Options should suit what they last did (e.g. if they just trained shoulders, suggest legs, pull, or rest; " +
+              "mix in a cardio option like 'Cardio' or 'Stairmaster' when it fits their fat-loss goal; always allow 'Rest' when recovery is wise). " +
               'Respond ONLY as JSON: {"feedback": string (2-4 sentences on their most recent session and overall trend), ' +
               '"recommendation": string (your single top pick, must be one of the options), ' +
-              '"question": string (e.g. "What do you want to do tomorrow?"), ' +
-              '"options": string[] (2-3 short choices, e.g. ["Chest","Legs","Rest"], ordered with your recommendation first)}',
+              '"question": string — phrase it referencing what they just did, e.g. "Seeing as you trained shoulders today, what do you want to do tomorrow?", ' +
+              '"options": string[] (EXACTLY 3 short choices, ordered with your recommendation first)}',
           },
           { role: "user", content: `Athlete data:\n${summary}` },
         ],
@@ -133,14 +136,18 @@ export async function POST(req: Request) {
           {
             role: "system",
             content:
-              "You are an elite strength & conditioning coach building TOMORROW's session. " +
-              "Base exercise selection, weights (kg) and reps on the athlete's recent logged numbers and bodyweight — " +
+              "You are an elite strength & conditioning coach building TOMORROW's session based on the athlete's choice. " +
+              "Decide the session kind: 'strength', 'cardio', or 'rest'. " +
+              "For STRENGTH: base exercise selection, weights (kg) and reps on the athlete's recent logged numbers and bodyweight — " +
               "apply sensible progression (small increases where reps were strong, hold or deload where they struggled or noted pain). " +
-              "Give a complete, realistic session of 4-6 exercises with concrete per-set weight and reps. " +
-              "If the athlete chose Rest, return empty exercises and a short recovery rationale. " +
-              'Respond ONLY as JSON: {"title": string (e.g. "Chest & Triceps"), ' +
+              "Give 4-6 exercises with concrete per-set weight and reps. " +
+              "For CARDIO (e.g. Stairmaster, Run, Bike): set a realistic activity, duration in minutes, and distance in km if relevant. " +
+              "For REST: explain the recovery rationale, no exercises. " +
+              'Respond ONLY as JSON: {"kind": "strength"|"cardio"|"rest", ' +
+              '"title": string (e.g. "Chest & Triceps" or "Stairmaster Cardio"), ' +
               '"rationale": string (1-3 sentences explaining the plan and key progression), ' +
-              '"exercises": [{"name": string, "sets": [{"weight": number, "reps": number}]}]}',
+              '"exercises": [{"name": string, "sets": [{"weight": number, "reps": number}]}] (only for strength, else []), ' +
+              '"cardio": {"activity": string, "durationMin": number, "distanceKm": number} (only for cardio, else null)}',
           },
           {
             role: "user",

@@ -75,9 +75,16 @@ export function RunCard({ r, onClick }: { r: Run; onClick?: () => void }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-accent2">
-            Cardio
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-accent2">
+              Cardio
+            </span>
+            {r.planned && (
+              <span className="rounded-full bg-accent2/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent2">
+                Planned
+              </span>
+            )}
+          </div>
           <h3 className="mt-0.5 font-semibold">{r.activity}</h3>
           <p className="text-xs text-muted">{fmtDate(r.date)}</p>
         </div>

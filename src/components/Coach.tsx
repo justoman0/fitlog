@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { AppData, Workout } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { AppData, Workout, Run } from "@/lib/types";
 import { uid } from "@/lib/store";
-import { todayISO, fmtDate, epley1RM } from "@/lib/format";
+import { todayISO, fmtDate, epley1RM, pace } from "@/lib/format";
 import { Button, Empty } from "./ui";
 
 type Suggestion = {
@@ -14,9 +14,15 @@ type Suggestion = {
 };
 
 type Plan = {
+  kind?: "strength" | "cardio" | "rest";
   title: string;
   rationale: string;
-  exercises: { name: string; sets: { weight: number; reps: number }[] }[];
+  exercises?: { name: string; sets: { weight: number; reps: number }[] }[];
+  cardio?: {
+    activity: string;
+    durationMin?: number;
+    distanceKm?: number;
+  } | null;
 };
 
 function tomorrowISO() {
@@ -28,10 +34,14 @@ function tomorrowISO() {
 
 export function Coach({
   data,
-  onSavePlan,
+  onSaveWorkout,
+  onSaveRun,
+  runSignal,
 }: {
   data: AppData;
-  onSavePlan: (w: Workout) => void;
+  onSaveWorkout: (w: Workout) => void;
+  onSaveRun: (r: Run) => void;
+  runSignal: number;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +78,7 @@ export function Coach({
     setDecision(null);
     setPlan(null);
     setChoice(null);
+    setSug(null);
     try {
       const s = (await call({ mode: "suggest", ...data })) as Suggestion;
       setSug(s);
@@ -77,6 +88,12 @@ export function Coach({
       setLoading(false);
     }
   };
+
+  // auto-start when triggered from the + menu
+  useEffect(() => {
+    if (runSignal > 0 && hasData) getSuggestion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runSignal]);
 
   const pickChoice = async (opt: string) => {
     setChoice(opt);
@@ -93,28 +110,45 @@ export function Coach({
     }
   };
 
+  const isRest =
+    plan?.kind === "rest" ||
+    (plan && plan.kind !== "cardio" && !(plan.exercises?.length) && !plan.cardio);
+  const isCardio = plan?.kind === "cardio" || (!!plan?.cardio && !isRest);
+
   const accept = () => {
     if (!plan) return;
-    const w: Workout = {
-      id: uid(),
-      kind: "strength",
-      date: tomorrowISO(),
-      title: plan.title,
-      exercises: plan.exercises.map((e) => ({
+    if (isCardio && plan.cardio) {
+      const r: Run = {
         id: uid(),
-        name: e.name,
-        sets: e.sets,
-      })),
-      notes: plan.rationale,
-      planned: true,
-      createdAt: Date.now(),
-    };
-    onSavePlan(w);
+        kind: "cardio",
+        date: tomorrowISO(),
+        activity: plan.cardio.activity || "Cardio",
+        durationMin: plan.cardio.durationMin,
+        distanceKm: plan.cardio.distanceKm,
+        notes: plan.rationale,
+        planned: true,
+        createdAt: Date.now(),
+      };
+      onSaveRun(r);
+    } else {
+      const w: Workout = {
+        id: uid(),
+        kind: "strength",
+        date: tomorrowISO(),
+        title: plan.title,
+        exercises: (plan.exercises ?? []).map((e) => ({
+          id: uid(),
+          name: e.name,
+          sets: e.sets,
+        })),
+        notes: plan.rationale,
+        planned: true,
+        createdAt: Date.now(),
+      };
+      onSaveWorkout(w);
+    }
     setDecision("saved");
   };
-
-  const isRest =
-    plan && (!plan.exercises || plan.exercises.length === 0);
 
   return (
     <div className="space-y-4">
@@ -138,11 +172,11 @@ export function Coach({
         <div className="rounded-2xl bg-card border border-line p-5 text-center space-y-4">
           <div className="text-4xl">🤖</div>
           <p className="text-sm text-muted">
-            Get feedback on your latest session and a plan for tomorrow, built
-            from your real numbers.
+            Get feedback on your latest session and a recommendation for
+            tomorrow, built from your real numbers.
           </p>
           <Button className="w-full" onClick={getSuggestion}>
-            Coach me
+            Get recommendation
           </Button>
         </div>
       )}
@@ -151,7 +185,7 @@ export function Coach({
         <div className="rounded-2xl bg-card border border-line p-6 text-center">
           <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-line border-t-accent" />
           <p className="mt-3 text-sm text-muted">
-            {plan === null && choice
+            {choice
               ? `Building your ${choice} session...`
               : "Your coach is reviewing your training..."}
           </p>
@@ -219,9 +253,29 @@ export function Coach({
             <p className="mt-1 text-sm text-muted">{plan.rationale}</p>
           </div>
 
-          {!isRest && (
+          {isCardio && plan.cardio && (
+            <div className="grid grid-cols-3 gap-2">
+              <Box label="Activity" value={plan.cardio.activity} />
+              <Box
+                label="Duration"
+                value={
+                  plan.cardio.durationMin ? `${plan.cardio.durationMin}m` : "—"
+                }
+              />
+              <Box
+                label={plan.cardio.distanceKm ? "Distance" : "Pace"}
+                value={
+                  plan.cardio.distanceKm
+                    ? `${plan.cardio.distanceKm}km`
+                    : pace(plan.cardio.distanceKm, plan.cardio.durationMin)
+                }
+              />
+            </div>
+          )}
+
+          {!isRest && !isCardio && (
             <div className="space-y-2">
-              {plan.exercises.map((e, i) => {
+              {(plan.exercises ?? []).map((e, i) => {
                 const best = e.sets
                   .map((s) => epley1RM(s.weight, s.reps))
                   .reduce((a, b) => Math.max(a, b), 0);
@@ -293,12 +347,21 @@ export function Coach({
       )}
       {decision === "discarded" && (
         <div className="rounded-2xl border border-line bg-card p-4 text-center">
-          <p className="text-sm text-muted">Discarded. </p>
+          <p className="text-sm text-muted">Discarded.</p>
           <Button variant="ghost" className="mt-2" onClick={getSuggestion}>
             Get another plan
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function Box({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-card2 border border-line p-3 text-center">
+      <div className="text-sm font-bold">{value}</div>
+      <div className="text-[10px] uppercase text-muted">{label}</div>
     </div>
   );
 }

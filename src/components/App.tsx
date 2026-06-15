@@ -39,6 +39,7 @@ export function App() {
   const { data, update, loaded } = useStore();
   const [tab, setTab] = useState<Tab>("home");
   const [sheet, setSheet] = useState<SheetState>({ type: "none" });
+  const [coachSignal, setCoachSignal] = useState(0);
   const close = () => setSheet({ type: "none" });
 
   // combined timeline
@@ -70,7 +71,9 @@ export function App() {
     const workoutsThisWeek = data.workouts.filter(
       (w) => !w.planned && inWeek(w.date)
     ).length;
-    const runsThisWeek = data.runs.filter((r) => inWeek(r.date)).length;
+    const runsThisWeek = data.runs.filter(
+      (r) => !r.planned && inWeek(r.date)
+    ).length;
     const latestWeight = weightsSorted[weightsSorted.length - 1]?.weight;
     const firstWeight = weightsSorted[0]?.weight;
     const delta =
@@ -131,7 +134,14 @@ export function App() {
             onDeleteWeight={delWeight}
           />
         )}
-        {tab === "coach" && <Coach data={data} onSavePlan={saveWorkout} />}
+        {tab === "coach" && (
+          <Coach
+            data={data}
+            onSaveWorkout={saveWorkout}
+            onSaveRun={saveRun}
+            runSignal={coachSignal}
+          />
+        )}
       </main>
 
       {/* FAB */}
@@ -193,6 +203,19 @@ export function App() {
             >
               ⚖️ Bodyweight
             </Button>
+            <div className="pt-1">
+              <Button
+                className="w-full"
+                variant="ghost"
+                onClick={() => {
+                  close();
+                  setTab("coach");
+                  setCoachSignal((n) => n + 1);
+                }}
+              >
+                🤖 Coach recommendation
+              </Button>
+            </div>
           </div>
         )}
 

@@ -34,6 +34,7 @@ export type Run = {
   bodyweight?: number;
   feeling?: string;
   notes?: string;
+  planned?: boolean; // AI-proposed, not yet performed
   createdAt: number;
 };
 
