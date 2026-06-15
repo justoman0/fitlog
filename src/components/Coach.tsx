@@ -22,7 +22,8 @@ type Plan = {
 function tomorrowISO() {
   const d = new Date(todayISO() + "T00:00:00");
   d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
 }
 
 export function Coach({
