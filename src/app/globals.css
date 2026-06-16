@@ -42,6 +42,17 @@ select {
   font-size: 16px; /* prevents iOS zoom on focus */
 }
 
+/* Normalise iOS date inputs so they align with other fields */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  text-align: left;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

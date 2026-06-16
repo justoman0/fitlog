@@ -24,7 +24,7 @@ export function WorkoutForm({
   const [bodyweight, setBodyweight] = useState<number>(
     initial?.bodyweight ?? 0
   );
-  const [fixingNames, setFixingNames] = useState(false);
+  const [fixingId, setFixingId] = useState<string | null>(null);
   const [feeling, setFeeling] = useState(initial?.feeling ?? "");
   const [food, setFood] = useState(initial?.food ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
@@ -72,28 +72,24 @@ export function WorkoutForm({
       )
     );
 
-  const fixNames = async () => {
-    const names = exercises.map((x) => x.name.trim());
-    if (!names.some(Boolean)) return;
-    setFixingNames(true);
+  const fixOne = async (id: string) => {
+    const ex = exercises.find((x) => x.id === id);
+    if (!ex || !ex.name.trim()) return;
+    setFixingId(id);
     try {
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "fixnames", names }),
+        body: JSON.stringify({ mode: "fixnames", names: [ex.name.trim()] }),
       });
       const json = await res.json();
-      if (Array.isArray(json.names)) {
-        setExercises((xs) =>
-          xs.map((x, i) =>
-            json.names[i] ? { ...x, name: json.names[i] } : x
-          )
-        );
+      if (Array.isArray(json.names) && json.names[0]) {
+        updateEx(id, { name: json.names[0] });
       }
     } catch {
-      /* ignore — keep typed names */
+      /* ignore — keep typed name */
     } finally {
-      setFixingNames(false);
+      setFixingId(null);
     }
   };
 
@@ -155,14 +151,9 @@ export function WorkoutForm({
           <div className="text-xs font-medium uppercase tracking-wide text-muted">
             Exercises
           </div>
-          <button
-            type="button"
-            onClick={fixNames}
-            disabled={fixingNames || !exercises.some((x) => x.name.trim())}
-            className="rounded-full border border-accent2/40 bg-accent2/15 px-3 py-1.5 text-xs font-semibold text-accent2 active:opacity-70 disabled:opacity-50"
-          >
-            {fixingNames ? "Fixing…" : "✨ Fix names"}
-          </button>
+          <span className="text-[11px] text-muted">
+            tap ✨ to auto-correct a name
+          </span>
         </div>
         {exercises.map((ex, exIdx) => (
           <div
@@ -175,6 +166,15 @@ export function WorkoutForm({
                 value={ex.name}
                 onChange={(e) => updateEx(ex.id, { name: e.target.value })}
               />
+              <button
+                type="button"
+                onClick={() => fixOne(ex.id)}
+                disabled={fixingId === ex.id || !ex.name.trim()}
+                aria-label="Auto-correct name"
+                className="shrink-0 rounded-lg border border-accent2/40 bg-accent2/15 px-2.5 py-2.5 text-sm text-accent2 active:opacity-70 disabled:opacity-30"
+              >
+                {fixingId === ex.id ? "…" : "✨"}
+              </button>
               {exercises.length > 1 && (
                 <button
                   onClick={() =>
