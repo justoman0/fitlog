@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Workout, Exercise } from "@/lib/types";
 import { uid } from "@/lib/store";
 import { todayISO } from "@/lib/format";
-import { Field, Input, Textarea, Button } from "./ui";
+import { Field, Input, Textarea, Button, DecimalInput, Toggle } from "./ui";
 
 function blankExercise(): Exercise {
   return { id: uid(), name: "", sets: [{ weight: 0, reps: 0 }] };
@@ -21,9 +21,10 @@ export function WorkoutForm({
 }) {
   const [date, setDate] = useState(initial?.date ?? todayISO());
   const [title, setTitle] = useState(initial?.title ?? "");
-  const [bodyweight, setBodyweight] = useState(
-    initial?.bodyweight?.toString() ?? ""
+  const [bodyweight, setBodyweight] = useState<number>(
+    initial?.bodyweight ?? 0
   );
+  const [fixingNames, setFixingNames] = useState(false);
   const [feeling, setFeeling] = useState(initial?.feeling ?? "");
   const [food, setFood] = useState(initial?.food ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
@@ -71,6 +72,31 @@ export function WorkoutForm({
       )
     );
 
+  const fixNames = async () => {
+    const names = exercises.map((x) => x.name.trim());
+    if (!names.some(Boolean)) return;
+    setFixingNames(true);
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "fixnames", names }),
+      });
+      const json = await res.json();
+      if (Array.isArray(json.names)) {
+        setExercises((xs) =>
+          xs.map((x, i) =>
+            json.names[i] ? { ...x, name: json.names[i] } : x
+          )
+        );
+      }
+    } catch {
+      /* ignore — keep typed names */
+    } finally {
+      setFixingNames(false);
+    }
+  };
+
   const save = () => {
     const cleaned = exercises
       .map((x) => ({
@@ -84,7 +110,7 @@ export function WorkoutForm({
       kind: "strength",
       date,
       title: title.trim() || "Workout",
-      bodyweight: bodyweight ? parseFloat(bodyweight) : undefined,
+      bodyweight: bodyweight || undefined,
       exercises: cleaned,
       feeling: feeling.trim() || undefined,
       food: food.trim() || undefined,
@@ -109,12 +135,10 @@ export function WorkoutForm({
           />
         </Field>
         <Field label="Bodyweight (kg)">
-          <Input
-            type="number"
-            inputMode="decimal"
+          <DecimalInput
             placeholder="103"
             value={bodyweight}
-            onChange={(e) => setBodyweight(e.target.value)}
+            onChange={setBodyweight}
           />
         </Field>
       </div>
@@ -127,8 +151,18 @@ export function WorkoutForm({
       </Field>
 
       <div className="space-y-3">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted">
-          Exercises
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-medium uppercase tracking-wide text-muted">
+            Exercises
+          </div>
+          <button
+            type="button"
+            onClick={fixNames}
+            disabled={fixingNames || !exercises.some((x) => x.name.trim())}
+            className="rounded-full border border-line bg-card2 px-3 py-1 text-xs text-accent2 active:opacity-70 disabled:opacity-40"
+          >
+            {fixingNames ? "Fixing…" : "✨ Fix names"}
+          </button>
         </div>
         {exercises.map((ex, exIdx) => (
           <div
@@ -155,31 +189,27 @@ export function WorkoutForm({
             </div>
 
             <div className="space-y-1.5">
-              <div className="grid grid-cols-[1.5rem_1fr_1fr_1.75rem] gap-2 px-1 text-[10px] uppercase text-muted">
+              <div className="grid grid-cols-[1.5rem_1fr_0.6rem_1fr_1.75rem] gap-2 px-1 text-[10px] uppercase text-muted">
                 <span>Set</span>
-                <span>Kg</span>
+                <span>Kg{ex.perSide ? "/side" : ""}</span>
+                <span />
                 <span>Reps</span>
                 <span />
               </div>
               {ex.sets.map((s, i) => (
                 <div
                   key={i}
-                  className="grid grid-cols-[1.5rem_1fr_1fr_1.75rem] items-center gap-2"
+                  className="grid grid-cols-[1.5rem_1fr_0.6rem_1fr_1.75rem] items-center gap-2"
                 >
                   <span className="text-center text-sm font-semibold text-muted">
                     {i + 1}
                   </span>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    value={s.weight || ""}
+                  <DecimalInput
+                    value={s.weight}
                     placeholder="0"
-                    onChange={(e) =>
-                      updateSet(ex.id, i, {
-                        weight: parseFloat(e.target.value) || 0,
-                      })
-                    }
+                    onChange={(n) => updateSet(ex.id, i, { weight: n })}
                   />
+                  <span className="text-center text-muted">×</span>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -207,6 +237,27 @@ export function WorkoutForm({
               >
                 + Add set
               </button>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+                <Toggle
+                  checked={!!ex.perSide}
+                  onChange={(v) => updateEx(ex.id, { perSide: v })}
+                  label="Per side (1 arm/leg)"
+                />
+                {exIdx > 0 && (
+                  <Toggle
+                    checked={!!ex.superset}
+                    onChange={(v) => updateEx(ex.id, { superset: v })}
+                    label="Superset w/ above"
+                  />
+                )}
+              </div>
+              {ex.perSide && (
+                <p className="text-[11px] text-muted">
+                  Enter the weight on <b>one</b> side — each arm/leg is counted
+                  separately.
+                </p>
+              )}
             </div>
           </div>
         ))}
@@ -243,14 +294,10 @@ export function WorkoutForm({
           ] as const
         ).map(([label, val, setter]) => (
           <Field key={label} label={label}>
-            <Input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={10}
+            <DecimalInput
               placeholder="0–10"
-              value={val || ""}
-              onChange={(e) => setter(parseFloat(e.target.value) || 0)}
+              value={val}
+              onChange={(n) => setter(n)}
             />
           </Field>
         ))}

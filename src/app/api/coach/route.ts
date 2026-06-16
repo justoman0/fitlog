@@ -159,6 +159,64 @@ export async function POST(req: Request) {
       return Response.json(result);
     }
 
+    if (body.mode === "recap") {
+      const w = body.workout as Workout | undefined;
+      if (!w) return Response.json({ error: "No workout provided" }, { status: 400 });
+      const exLines = w.exercises
+        .map(
+          (e) =>
+            `${e.name}${e.perSide ? " (per side)" : ""}: ${e.sets
+              .map((s) => `${s.weight}kg×${s.reps}`)
+              .join(", ")}`
+        )
+        .join("\n");
+      const result = await callOpenAI(
+        [
+          {
+            role: "system",
+            content:
+              "You are a hype but knowledgeable gym coach. The athlete just FINISHED this workout. " +
+              "Give a short, punchy, celebratory recap (2-3 sentences max). Call out their best/standout set, " +
+              "acknowledge the effort, and drop one quick tip for next time. Sound genuinely stoked. " +
+              'Respond ONLY as JSON: {"recap": string}',
+          },
+          {
+            role: "user",
+            content: `Just completed "${w.title}"${
+              w.bodyweight ? ` at ${w.bodyweight}kg bodyweight` : ""
+            }:\n${exLines}\n\nContext of recent training:\n${summary}`,
+          },
+        ],
+        "Expected recap."
+      );
+      return Response.json(result);
+    }
+
+    if (body.mode === "fixnames") {
+      const names: string[] = body.names ?? [];
+      const result = await callOpenAI(
+        [
+          {
+            role: "system",
+            content:
+              "You correct gym exercise names to their standard, recognisable form. " +
+              "The user is bad with names and may write shorthand, typos, or vague descriptions. " +
+              "Return the cleaned official name for each (e.g. 'lat raise cable' -> 'Side Lateral Cable Raise', " +
+              "'mil press' -> 'Standing Military Press'). Keep it concise and conventional. " +
+              "If an entry is empty or you truly can't tell, return it unchanged. " +
+              "Return EXACTLY the same number of items in the same order. " +
+              'Respond ONLY as JSON: {"names": string[]}',
+          },
+          { role: "user", content: JSON.stringify({ names }) },
+        ],
+        "Expected names array."
+      );
+      // guard: same length
+      if (!Array.isArray(result.names) || result.names.length !== names.length)
+        return Response.json({ names });
+      return Response.json(result);
+    }
+
     return Response.json({ error: "Unknown mode" }, { status: 400 });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";

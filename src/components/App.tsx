@@ -14,6 +14,7 @@ import { WorkoutDetail, RunDetail } from "./Detail";
 import { LineChart } from "./LineChart";
 import { Coach } from "./Coach";
 import { Progress } from "./Progress";
+import { Celebrate } from "./Celebrate";
 
 type Tab = "home" | "history" | "progress" | "coach";
 type SheetState =
@@ -25,6 +26,7 @@ type SheetState =
   | { type: "editRun"; r: Run }
   | { type: "viewWorkout"; w: Workout }
   | { type: "viewRun"; r: Run }
+  | { type: "celebrate"; w: Workout }
   | { type: "menu" };
 
 function startOfWeek() {
@@ -224,7 +226,8 @@ export function App() {
             <WorkoutForm
               onSave={(w) => {
                 saveWorkout(w);
-                close();
+                if (w.exercises.length) setSheet({ type: "celebrate", w });
+                else close();
               }}
               onCancel={close}
             />
@@ -275,6 +278,9 @@ export function App() {
               onCancel={close}
             />
           </FormWrap>
+        )}
+        {sheet.type === "celebrate" && (
+          <Celebrate workout={sheet.w} data={data} onDone={close} />
         )}
         {sheet.type === "viewWorkout" && (
           <WorkoutDetail

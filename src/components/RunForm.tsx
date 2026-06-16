@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Run } from "@/lib/types";
 import { uid } from "@/lib/store";
 import { todayISO, pace } from "@/lib/format";
-import { Field, Input, Textarea, Button } from "./ui";
+import { Field, Input, Textarea, Button, DecimalInput } from "./ui";
 
 const ACTIVITIES = ["Run", "Stairmaster", "Bike", "Walk", "Row", "Swim"];
 
@@ -19,20 +19,13 @@ export function RunForm({
 }) {
   const [date, setDate] = useState(initial?.date ?? todayISO());
   const [activity, setActivity] = useState(initial?.activity ?? "Run");
-  const [distance, setDistance] = useState(
-    initial?.distanceKm?.toString() ?? ""
-  );
-  const [duration, setDuration] = useState(
-    initial?.durationMin?.toString() ?? ""
-  );
-  const [bodyweight, setBodyweight] = useState(
-    initial?.bodyweight?.toString() ?? ""
+  const [km, setKm] = useState<number>(initial?.distanceKm ?? 0);
+  const [min, setMin] = useState<number>(initial?.durationMin ?? 0);
+  const [bodyweight, setBodyweight] = useState<number>(
+    initial?.bodyweight ?? 0
   );
   const [feeling, setFeeling] = useState(initial?.feeling ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
-
-  const km = parseFloat(distance) || 0;
-  const min = parseFloat(duration) || 0;
 
   const save = () => {
     const r: Run = {
@@ -42,7 +35,7 @@ export function RunForm({
       activity,
       distanceKm: km || undefined,
       durationMin: min || undefined,
-      bodyweight: bodyweight ? parseFloat(bodyweight) : undefined,
+      bodyweight: bodyweight || undefined,
       feeling: feeling.trim() || undefined,
       notes: notes.trim() || undefined,
       createdAt: initial?.createdAt ?? Date.now(),
@@ -61,12 +54,10 @@ export function RunForm({
           />
         </Field>
         <Field label="Bodyweight (kg)">
-          <Input
-            type="number"
-            inputMode="decimal"
+          <DecimalInput
             placeholder="103"
             value={bodyweight}
-            onChange={(e) => setBodyweight(e.target.value)}
+            onChange={setBodyweight}
           />
         </Field>
       </div>
@@ -91,22 +82,10 @@ export function RunForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Distance (km)">
-          <Input
-            type="number"
-            inputMode="decimal"
-            placeholder="5.0"
-            value={distance}
-            onChange={(e) => setDistance(e.target.value)}
-          />
+          <DecimalInput placeholder="5.0" value={km} onChange={setKm} />
         </Field>
         <Field label="Duration (min)">
-          <Input
-            type="number"
-            inputMode="decimal"
-            placeholder="30"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-          />
+          <DecimalInput placeholder="30" value={min} onChange={setMin} />
         </Field>
       </div>
 

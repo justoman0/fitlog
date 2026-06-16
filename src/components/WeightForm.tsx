@@ -4,7 +4,7 @@ import { useState } from "react";
 import { WeightEntry } from "@/lib/types";
 import { uid } from "@/lib/store";
 import { todayISO } from "@/lib/format";
-import { Field, Input, Textarea, Button } from "./ui";
+import { Field, Input, Textarea, Button, DecimalInput } from "./ui";
 
 export function WeightForm({
   initial,
@@ -16,16 +16,15 @@ export function WeightForm({
   onCancel: () => void;
 }) {
   const [date, setDate] = useState(initial?.date ?? todayISO());
-  const [weight, setWeight] = useState(initial?.weight?.toString() ?? "");
+  const [weight, setWeight] = useState<number>(initial?.weight ?? 0);
   const [notes, setNotes] = useState(initial?.notes ?? "");
 
   const save = () => {
-    const val = parseFloat(weight);
-    if (!val) return;
+    if (!weight) return;
     onSave({
       id: initial?.id ?? uid(),
       date,
-      weight: val,
+      weight,
       notes: notes.trim() || undefined,
       createdAt: initial?.createdAt ?? Date.now(),
     });
@@ -42,12 +41,10 @@ export function WeightForm({
           />
         </Field>
         <Field label="Weight (kg)">
-          <Input
-            type="number"
-            inputMode="decimal"
+          <DecimalInput
             placeholder="103.0"
             value={weight}
-            onChange={(e) => setWeight(e.target.value)}
+            onChange={setWeight}
             autoFocus
           />
         </Field>

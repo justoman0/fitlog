@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 export function Card({
   children,
@@ -50,6 +50,82 @@ export function Textarea(
       {...props}
       className={`${inputBase} resize-none ${props.className ?? ""}`}
     />
+  );
+}
+
+// Number input that accepts BOTH "." and "," as the decimal separator
+// (fixes iOS keyboards that only offer a comma).
+export function DecimalInput({
+  value,
+  onChange,
+  className = "",
+  placeholder,
+  ...rest
+}: {
+  value: number | undefined;
+  onChange: (n: number) => void;
+  className?: string;
+  placeholder?: string;
+} & Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "type"
+>) {
+  const [str, setStr] = useState(value ? String(value) : "");
+
+  useEffect(() => {
+    const cur = parseFloat(str.replace(",", "."));
+    const curNum = isNaN(cur) ? 0 : cur;
+    if (curNum !== (value ?? 0)) setStr(value != null && value !== 0 ? String(value) : str === "" ? "" : str);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <input
+      {...rest}
+      type="text"
+      inputMode="decimal"
+      placeholder={placeholder}
+      value={str}
+      onChange={(e) => {
+        const v = e.target.value;
+        if (!/^[0-9]*[.,]?[0-9]*$/.test(v)) return; // digits + one separator only
+        setStr(v);
+        const n = parseFloat(v.replace(",", "."));
+        onChange(isNaN(n) ? 0 : n);
+      }}
+      className={`${inputBase} ${className}`}
+    />
+  );
+}
+
+export function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-2 text-sm active:opacity-70"
+    >
+      <span
+        className={`relative h-5 w-9 rounded-full transition-colors ${
+          checked ? "bg-accent" : "bg-line"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+            checked ? "translate-x-4" : "translate-x-0.5"
+          }`}
+        />
+      </span>
+      <span className={checked ? "text-foreground" : "text-muted"}>{label}</span>
+    </button>
   );
 }
 

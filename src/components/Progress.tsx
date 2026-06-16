@@ -114,6 +114,13 @@ export function Progress({
               Best estimated 1RM per session (kg)
             </div>
             <LineChart points={e1rmSeries} unit="kg" height={160} />
+            <p className="mt-2 text-[11px] leading-relaxed text-muted">
+              This is your <b>estimated 1-rep max</b> — how much you could lift
+              once — calculated from your heaviest set each session. Since you
+              train different muscles on different days, expect this line to
+              zig-zag. The <b>By exercise</b> chart below is the better way to
+              see if a specific lift is going up.
+            </p>
           </Card>
         ) : (
           <Empty>Log 2+ strength sessions to track your strength.</Empty>

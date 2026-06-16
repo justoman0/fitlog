@@ -5,6 +5,8 @@ export type Exercise = {
   name: string;
   sets: SetEntry[];
   notes?: string;
+  perSide?: boolean; // weight logged is per arm/leg (unilateral)
+  superset?: boolean; // grouped as a superset with the exercise above
 };
 
 export type Rating = { effort?: number; strength?: number; pump?: number };

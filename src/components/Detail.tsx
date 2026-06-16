@@ -47,8 +47,20 @@ export function WorkoutDetail({
               key={ex.id}
               className="rounded-2xl bg-card2 border border-line p-3"
             >
+              {ex.superset && (
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-accent2">
+                  ⛓ Superset
+                </div>
+              )}
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold">{ex.name}</h4>
+                <h4 className="font-semibold">
+                  {ex.name}
+                  {ex.perSide && (
+                    <span className="ml-1.5 text-xs font-normal text-muted">
+                      (per side)
+                    </span>
+                  )}
+                </h4>
                 {best > 0 && (
                   <span className="text-xs text-muted">e1RM {best}kg</span>
                 )}
