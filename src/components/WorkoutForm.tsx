@@ -159,7 +159,7 @@ export function WorkoutForm({
             type="button"
             onClick={fixNames}
             disabled={fixingNames || !exercises.some((x) => x.name.trim())}
-            className="rounded-full border border-line bg-card2 px-3 py-1 text-xs text-accent2 active:opacity-70 disabled:opacity-40"
+            className="rounded-full border border-accent2/40 bg-accent2/15 px-3 py-1.5 text-xs font-semibold text-accent2 active:opacity-70 disabled:opacity-50"
           >
             {fixingNames ? "Fixing…" : "✨ Fix names"}
           </button>

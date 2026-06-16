@@ -36,7 +36,7 @@ export function Field({
 }
 
 const inputBase =
-  "w-full rounded-xl bg-card2 border border-line px-3 py-2.5 text-foreground placeholder:text-muted outline-none focus:border-accent transition-colors";
+  "w-full box-border min-h-[48px] rounded-xl bg-card2 border border-line px-3 py-2.5 text-foreground placeholder:text-muted outline-none focus:border-accent transition-colors";
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${inputBase} ${props.className ?? ""}`} />;
@@ -114,13 +114,13 @@ export function Toggle({
       className="flex items-center gap-2 text-sm active:opacity-70"
     >
       <span
-        className={`relative h-5 w-9 rounded-full transition-colors ${
+        className={`relative inline-block h-6 w-11 shrink-0 rounded-full transition-colors ${
           checked ? "bg-accent" : "bg-line"
         }`}
       >
         <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-4" : "translate-x-0.5"
+          className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 ${
+            checked ? "translate-x-5" : "translate-x-0"
           }`}
         />
       </span>
