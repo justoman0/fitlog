@@ -2,9 +2,10 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
+import { useAuthSync } from "@/lib/sync";
 import { Workout, Run, WeightEntry, AppData } from "@/lib/types";
 import { fmtDate, todayISO } from "@/lib/format";
-import { Stat, Empty, Button } from "./ui";
+import { Stat, Empty, Button, Input } from "./ui";
 import { Sheet } from "./Sheet";
 import { WorkoutForm } from "./WorkoutForm";
 import { RunForm } from "./RunForm";
@@ -55,6 +56,10 @@ export function App() {
   const [sheet, setSheet] = useState<SheetState>({ type: "none" });
   const [coachSignal, setCoachSignal] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [authEmail, setAuthEmail] = useState("");
+  const [linkSent, setLinkSent] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const { user, status, signIn, signOut } = useAuthSync(data, update, loaded);
   const close = () => setSheet({ type: "none" });
 
   // combined timeline
@@ -295,18 +300,99 @@ export function App() {
               />
             </div>
 
-            <div className="rounded-2xl border border-line bg-card2/50 p-4">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-accent2" />
-                <h3 className="text-sm font-bold uppercase tracking-wide text-accent2">
-                  Cloud accounts — coming next
+            <div className="rounded-2xl border border-line bg-card p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold uppercase tracking-wide">
+                  Cloud account
                 </h3>
+                {user && (
+                  <span
+                    className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider ${
+                      status === "error" ? "text-red-400" : "text-success"
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        status === "syncing"
+                          ? "bg-accent animate-pulse"
+                          : status === "error"
+                          ? "bg-red-400"
+                          : "bg-success"
+                      }`}
+                    />
+                    {status === "syncing"
+                      ? "Syncing"
+                      : status === "error"
+                      ? "Error"
+                      : "Synced"}
+                  </span>
+                )}
               </div>
-              <p className="mt-1.5 text-xs text-muted">
-                Soon you&apos;ll be able to log in so your data syncs across
-                devices and can never be lost. For now, export a backup
-                regularly to stay safe.
-              </p>
+
+              {user ? (
+                <div className="mt-2">
+                  <p className="text-sm">
+                    Signed in as{" "}
+                    <b className="break-all">{user.email}</b>
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    Your logs sync to the cloud automatically and are safe
+                    across devices.
+                  </p>
+                  <Button
+                    variant="ghost"
+                    className="mt-3 w-full"
+                    onClick={() => signOut()}
+                  >
+                    Sign out
+                  </Button>
+                </div>
+              ) : linkSent ? (
+                <div className="mt-2">
+                  <p className="text-sm">
+                    📧 Check your email — tap the magic link to sign in. Your
+                    current logs will upload automatically once you&apos;re in.
+                  </p>
+                  <Button
+                    variant="ghost"
+                    className="mt-3 w-full"
+                    onClick={() => setLinkSent(false)}
+                  >
+                    Use a different email
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <p className="text-xs text-muted">
+                    Log in to sync your data across devices so it can never be
+                    lost. We&apos;ll email you a one-tap link — no password.
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    <Input
+                      type="email"
+                      inputMode="email"
+                      placeholder="you@email.com"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                    />
+                    {authError && (
+                      <p className="text-xs text-red-400">{authError}</p>
+                    )}
+                    <Button
+                      className="w-full"
+                      disabled={!authEmail.includes("@")}
+                      onClick={async () => {
+                        setAuthError(null);
+                        const err = await signIn(authEmail);
+                        if (err) setAuthError(err);
+                        else setLinkSent(true);
+                      }}
+                    >
+                      Send magic link
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
