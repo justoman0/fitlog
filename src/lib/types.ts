@@ -63,7 +63,7 @@ export type Profile = {
 export type Strain = {
   id: string;
   area: string; // Ankle, Wrist, Shoulder, Knee, Lower back...
-  severity?: "niggle" | "sore" | "painful";
+  severity?: "minor" | "sore" | "painful";
   note?: string;
   date: string;
   active: boolean;

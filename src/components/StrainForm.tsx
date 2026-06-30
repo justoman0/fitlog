@@ -19,7 +19,7 @@ const AREAS = [
   "Other",
 ];
 
-const SEVERITIES: Strain["severity"][] = ["niggle", "sore", "painful"];
+const SEVERITIES: Strain["severity"][] = ["minor", "sore", "painful"];
 
 export function StrainForm({
   onSave,
@@ -30,7 +30,7 @@ export function StrainForm({
 }) {
   const [area, setArea] = useState("");
   const [custom, setCustom] = useState("");
-  const [severity, setSeverity] = useState<Strain["severity"]>("niggle");
+  const [severity, setSeverity] = useState<Strain["severity"]>("minor");
   const [note, setNote] = useState("");
 
   const finalArea = area === "Other" ? custom.trim() : area;
@@ -52,7 +52,7 @@ export function StrainForm({
     <div className="space-y-5">
       <div>
         <h2 className="text-2xl font-bold uppercase tracking-wide">
-          Flag a niggle
+          Flag an injury
         </h2>
         <p className="mt-1 text-sm text-muted">
           Tell your coach what&apos;s bothering you — it&apos;ll route your
@@ -123,7 +123,7 @@ export function StrainForm({
           Cancel
         </Button>
         <Button className="flex-1" onClick={save} disabled={!finalArea}>
-          Save niggle
+          Save injury
         </Button>
       </div>
     </div>

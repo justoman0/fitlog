@@ -508,7 +508,7 @@ export function App() {
               />
               <MenuTile
                 icon={<IconBandage width={26} height={26} />}
-                label="Flag a niggle"
+                label="Flag injury"
                 accent="danger"
                 onClick={() => setSheet({ type: "newStrain" })}
               />
