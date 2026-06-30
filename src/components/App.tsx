@@ -15,6 +15,17 @@ import { LineChart } from "./LineChart";
 import { Coach } from "./Coach";
 import { Progress } from "./Progress";
 import { Celebrate } from "./Celebrate";
+import {
+  IconHome,
+  IconHistory,
+  IconChart,
+  IconCoach,
+  IconPlus,
+  IconDots,
+  IconDumbbell,
+  IconRun,
+  IconScale,
+} from "./Icons";
 
 type Tab = "home" | "history" | "progress" | "coach";
 type SheetState =
@@ -104,16 +115,21 @@ export function App() {
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
       {/* header */}
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-background/90 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur">
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-background/85 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur-md">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">FitLog</h1>
-          <p className="text-xs text-muted">{fmtDate(todayISO())}</p>
+          <h1 className="text-2xl font-bold uppercase leading-none tracking-wide">
+            Fit<span className="text-accent">Log</span>
+          </h1>
+          <p className="mt-0.5 text-xs font-medium uppercase tracking-wider text-muted">
+            {fmtDate(todayISO())}
+          </p>
         </div>
         <button
           onClick={() => setSheet({ type: "menu" })}
-          className="rounded-xl bg-card border border-line px-3 py-2 text-sm"
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-card border border-line text-muted active:bg-card2"
+          aria-label="Menu"
         >
-          ⋯
+          <IconDots width={20} height={20} />
         </button>
       </header>
 
@@ -147,34 +163,35 @@ export function App() {
       </main>
 
       {/* FAB */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-24 z-30 mx-auto flex max-w-md justify-end px-4">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[5.5rem] z-30 mx-auto flex max-w-md justify-end px-4">
         <button
           onClick={() => setSheet({ type: "menu" })}
-          className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent text-3xl font-light text-black shadow-lg shadow-accent/20 active:scale-95"
+          className="pointer-events-auto flex h-15 w-15 items-center justify-center rounded-2xl bg-gradient-to-b from-accent to-accent-deep text-[#1a0f04] shadow-xl shadow-accent/30 active:scale-95"
+          style={{ height: 60, width: 60 }}
           aria-label="Add entry"
         >
-          +
+          <IconPlus width={28} height={28} strokeWidth={2.5} />
         </button>
       </div>
 
       {/* bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md justify-around border-t border-line bg-background/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur">
+      <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md justify-around border-t border-line bg-background/90 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md">
         {(
           [
-            ["home", "Home", "🏠"],
-            ["history", "History", "📋"],
-            ["progress", "Progress", "📈"],
-            ["coach", "Coach", "🤖"],
+            ["home", "Home", IconHome],
+            ["history", "History", IconHistory],
+            ["progress", "Progress", IconChart],
+            ["coach", "Coach", IconCoach],
           ] as const
-        ).map(([id, label, icon]) => (
+        ).map(([id, label, Icon]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] ${
+            className={`flex min-h-[48px] flex-1 flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
               tab === id ? "text-accent" : "text-muted"
             }`}
           >
-            <span className="text-lg">{icon}</span>
+            <Icon width={22} height={22} strokeWidth={tab === id ? 2.4 : 2} />
             {label}
           </button>
         ))}
@@ -183,40 +200,39 @@ export function App() {
       {/* sheets */}
       <Sheet open={sheet.type !== "none"} onClose={close}>
         {sheet.type === "menu" && (
-          <div className="space-y-3 pb-2">
-            <h2 className="text-lg font-bold">Log an entry</h2>
-            <Button
-              className="w-full"
-              onClick={() => setSheet({ type: "newWorkout" })}
-            >
-              🏋️ Strength workout
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => setSheet({ type: "newRun" })}
-            >
-              🏃 Run / cardio
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => setSheet({ type: "newWeight" })}
-            >
-              ⚖️ Bodyweight
-            </Button>
-            <div className="pt-1">
-              <Button
-                className="w-full"
-                variant="ghost"
+          <div className="pb-2">
+            <h2 className="mb-4 text-2xl font-bold uppercase tracking-wide">
+              Log an entry
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              <MenuTile
+                icon={<IconDumbbell width={26} height={26} />}
+                label="Strength"
+                accent="accent"
+                onClick={() => setSheet({ type: "newWorkout" })}
+              />
+              <MenuTile
+                icon={<IconRun width={26} height={26} />}
+                label="Cardio"
+                accent="accent2"
+                onClick={() => setSheet({ type: "newRun" })}
+              />
+              <MenuTile
+                icon={<IconScale width={26} height={26} />}
+                label="Bodyweight"
+                accent="success"
+                onClick={() => setSheet({ type: "newWeight" })}
+              />
+              <MenuTile
+                icon={<IconCoach width={26} height={26} />}
+                label="Coach plan"
+                accent="accent"
                 onClick={() => {
                   close();
                   setTab("coach");
                   setCoachSignal((n) => n + 1);
                 }}
-              >
-                🤖 Coach recommendation
-              </Button>
+              />
             </div>
           </div>
         )}
@@ -364,7 +380,9 @@ function HomeView({
       {weights.length >= 2 && (
         <div className="rounded-2xl bg-card border border-line p-4">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Weight trend</h3>
+            <h3 className="text-base font-bold uppercase tracking-wide">
+              Weight trend
+            </h3>
             <span className="text-xs text-muted">
               {weights.length} entries
             </span>
@@ -372,12 +390,15 @@ function HomeView({
           <LineChart
             points={weights.map((w) => ({ x: w.date, y: w.weight }))}
             unit="kg"
+            color="var(--success)"
           />
         </div>
       )}
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold">Recent activity</h3>
+        <h3 className="mb-3 text-base font-bold uppercase tracking-wide text-muted">
+          Recent activity
+        </h3>
         {recent.length === 0 ? (
           <Empty>
             No entries yet. Tap the <span className="text-accent">+</span> to log
@@ -431,7 +452,7 @@ function HistoryView({
             onClick={() => setFilter(id)}
             className={`rounded-full px-3.5 py-1.5 text-sm transition ${
               filter === id
-                ? "bg-accent text-black font-semibold"
+                ? "bg-accent text-[#1a0f04] font-bold"
                 : "bg-card border border-line text-muted"
             }`}
           >
@@ -461,6 +482,35 @@ function HistoryView({
         </div>
       )}
     </div>
+  );
+}
+
+function MenuTile({
+  icon,
+  label,
+  accent,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  accent: "accent" | "accent2" | "success";
+  onClick: () => void;
+}) {
+  const ring = {
+    accent: "text-accent",
+    accent2: "text-accent2",
+    success: "text-success",
+  }[accent];
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-start gap-6 rounded-2xl border border-line bg-card2 p-4 text-left transition active:scale-[0.98] active:bg-card"
+    >
+      <span className={ring}>{icon}</span>
+      <span className="font-display text-lg font-semibold uppercase tracking-wide">
+        {label}
+      </span>
+    </button>
   );
 }
 

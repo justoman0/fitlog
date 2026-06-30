@@ -4,11 +4,14 @@ export function LineChart({
   points,
   height = 160,
   unit = "",
+  color = "var(--accent)",
 }: {
   points: { x: string; y: number }[];
   height?: number;
   unit?: string;
+  color?: string;
 }) {
+  const gid = `lcfill-${color.replace(/[^a-z0-9]/gi, "")}`;
   if (points.length === 0) return null;
   const w = 320;
   const h = height;
@@ -50,9 +53,9 @@ export function LineChart({
       style={{ height }}
     >
       <defs>
-        <linearGradient id="lcfill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4ade80" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#4ade80" stopOpacity="0" />
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
       {[0, 0.5, 1].map((t) => (
@@ -62,15 +65,15 @@ export function LineChart({
           x2={w - pad}
           y1={pad + (h - pad * 2) * t}
           y2={pad + (h - pad * 2) * t}
-          stroke="#262a35"
+          stroke="var(--line)"
           strokeWidth="1"
         />
       ))}
-      <path d={area} fill="url(#lcfill)" />
+      <path d={area} fill={`url(#${gid})`} />
       <path
         d={path}
         fill="none"
-        stroke="#4ade80"
+        stroke={color}
         strokeWidth="2.5"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -78,23 +81,23 @@ export function LineChart({
       />
       {points.map((p, i) => {
         const [px, py] = coord(i, p.y);
-        return <circle key={i} cx={px} cy={py} r="2.5" fill="#4ade80" />;
+        return <circle key={i} cx={px} cy={py} r="2.5" fill={color} />;
       })}
-      <text x={pad} y={14} fill="#8b909c" fontSize="10">
+      <text x={pad} y={14} fill="var(--muted)" fontSize="10">
         {max.toFixed(1)}
         {unit}
       </text>
-      <text x={pad} y={h - pad + 16} fill="#8b909c" fontSize="10">
+      <text x={pad} y={h - pad + 16} fill="var(--muted)" fontSize="10">
         {min.toFixed(1)}
         {unit}
       </text>
       <text
         x={w - pad}
         y={14}
-        fill="#4ade80"
+        fill={color}
         fontSize="11"
         textAnchor="end"
-        fontWeight="600"
+        fontWeight="700"
       >
         {last.y}
         {unit}

@@ -89,8 +89,12 @@ export function Progress({
       {/* Bodyweight */}
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-lg font-bold">Bodyweight</h2>
-          <Button onClick={onAddWeight}>+ Log</Button>
+          <h2 className="text-xl font-bold uppercase tracking-wide">
+            Bodyweight
+          </h2>
+          <Button onClick={onAddWeight} className="px-4">
+            + Log
+          </Button>
         </div>
         {weights.length >= 2 ? (
           <Card>
@@ -98,6 +102,7 @@ export function Progress({
               points={weights.map((w) => ({ x: w.date, y: w.weight }))}
               unit="kg"
               height={180}
+              color="var(--success)"
             />
           </Card>
         ) : (
@@ -107,7 +112,7 @@ export function Progress({
 
       {/* Strength e1RM */}
       <section>
-        <h2 className="mb-2 text-lg font-bold">Strength trend</h2>
+        <h2 className="mb-2 text-xl font-bold uppercase tracking-wide">Strength trend</h2>
         {e1rmSeries.length >= 2 ? (
           <Card>
             <div className="mb-1 text-xs text-muted">
@@ -130,7 +135,7 @@ export function Progress({
       {/* Volume */}
       {volumeSeries.length >= 2 && (
         <section>
-          <h2 className="mb-2 text-lg font-bold">Total volume</h2>
+          <h2 className="mb-2 text-xl font-bold uppercase tracking-wide">Total volume</h2>
           <Card>
             <div className="mb-1 text-xs text-muted">
               Total kg lifted per session (weight × reps)
@@ -143,7 +148,7 @@ export function Progress({
       {/* Per exercise */}
       {exerciseNames.length > 0 && exName && (
         <section>
-          <h2 className="mb-2 text-lg font-bold">By exercise</h2>
+          <h2 className="mb-2 text-xl font-bold uppercase tracking-wide">By exercise</h2>
           <div className="mb-2 flex gap-2 overflow-x-auto no-scrollbar pb-1">
             {exerciseNames.map((n) => (
               <button
@@ -151,7 +156,7 @@ export function Progress({
                 onClick={() => setSelected(n)}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm transition ${
                   n === exName
-                    ? "bg-accent text-black font-semibold"
+                    ? "bg-accent text-[#1a0f04] font-bold"
                     : "bg-card border border-line text-muted"
                 }`}
               >

@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0b0f;
-  --foreground: #f4f5f7;
-  --card: #14161d;
-  --card2: #1b1e27;
-  --line: #262a35;
-  --muted: #8b909c;
-  --accent: #4ade80;
-  --accent2: #22d3ee;
+  /* Energetic OLED palette — UI/UX Pro Max: Fitness/Gym App */
+  --background: #0a0d14;
+  --foreground: #f5f7fa;
+  --card: #141a24;
+  --card2: #1c2330;
+  --line: #252d3b;
+  --muted: #8b95a7;
+  --accent: #f97316; /* energetic orange — strength / brand */
+  --accent-deep: #ea580c;
+  --accent2: #38bdf8; /* electric blue — cardio */
+  --success: #22c55e; /* green — positive / weight */
 }
 
 @theme inline {
@@ -19,8 +22,11 @@
   --color-line: var(--line);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
   --color-accent2: var(--accent2);
-  --font-sans: var(--font-geist-sans);
+  --color-success: var(--success);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
 }
 
 html,
@@ -32,14 +38,26 @@ body {
 }
 
 body {
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+  font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system,
     sans-serif;
+  letter-spacing: 0.005em;
+}
+
+/* Condensed display font for all headings + the .font-display utility */
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.01em;
 }
 
 input,
 textarea,
 select {
   font-size: 16px; /* prevents iOS zoom on focus */
+  font-family: var(--font-body), sans-serif;
 }
 
 /* Normalise iOS date inputs so they align with other fields */
@@ -63,7 +81,7 @@ input[type="date"]::-webkit-date-and-time-value {
 
 @keyframes pop {
   from {
-    transform: translateY(6px);
+    transform: translateY(8px);
     opacity: 0;
   }
   to {
@@ -72,5 +90,19 @@ input[type="date"]::-webkit-date-and-time-value {
   }
 }
 .pop {
-  animation: pop 0.18s ease-out;
+  animation: pop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.rise {
+  animation: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

@@ -2,6 +2,15 @@
 
 import { Workout, Run } from "@/lib/types";
 import { fmtDate, epley1RM, pace } from "@/lib/format";
+import { IconDumbbell, IconRun } from "./Icons";
+
+function PlannedTag() {
+  return (
+    <span className="rounded-md bg-accent2/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent2 font-display">
+      Planned
+    </span>
+  );
+}
 
 export function WorkoutCard({
   w,
@@ -17,51 +26,55 @@ export function WorkoutCard({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-2xl bg-card border border-line p-4 active:opacity-80 transition"
+      className="group w-full overflow-hidden rounded-2xl border border-line bg-card text-left transition active:scale-[0.99]"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex items-stretch">
+        <div className="flex w-14 shrink-0 items-center justify-center bg-accent/10 text-accent">
+          <IconDumbbell width={24} height={24} />
+        </div>
+        <div className="min-w-0 flex-1 p-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent font-display">
               Strength
             </span>
-            {w.planned && (
-              <span className="rounded-full bg-accent2/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent2">
-                Planned
+            {w.planned && <PlannedTag />}
+          </div>
+          <h3 className="mt-0.5 truncate text-lg font-bold uppercase leading-tight">
+            {w.title}
+          </h3>
+          <p className="text-xs text-muted">{fmtDate(w.date)}</p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+            <span>
+              <b className="font-display text-sm text-foreground">
+                {w.exercises.length}
+              </b>{" "}
+              exercises
+            </span>
+            <span>
+              <b className="font-display text-sm text-foreground">
+                {totalSets}
+              </b>{" "}
+              sets
+            </span>
+            {best > 0 && (
+              <span>
+                <b className="font-display text-sm text-accent">{best}kg</b>{" "}
+                top e1RM
               </span>
             )}
           </div>
-          <h3 className="mt-0.5 font-semibold">{w.title}</h3>
-          <p className="text-xs text-muted">{fmtDate(w.date)}</p>
         </div>
         {w.bodyweight && (
-          <div className="text-right">
-            <div className="text-sm font-semibold tabular-nums">
-              {w.bodyweight}kg
+          <div className="flex flex-col items-end justify-center pr-4 text-right">
+            <div className="font-display text-lg font-bold tabular-nums">
+              {w.bodyweight}
             </div>
-            <div className="text-[10px] text-muted">bodyweight</div>
+            <div className="text-[9px] uppercase tracking-wider text-muted">
+              kg BW
+            </div>
           </div>
         )}
-      </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {w.exercises.slice(0, 4).map((e) => (
-          <span
-            key={e.id}
-            className="rounded-full bg-card2 border border-line px-2.5 py-1 text-xs text-muted"
-          >
-            {e.name}
-          </span>
-        ))}
-        {w.exercises.length > 4 && (
-          <span className="rounded-full bg-card2 border border-line px-2.5 py-1 text-xs text-muted">
-            +{w.exercises.length - 4}
-          </span>
-        )}
-      </div>
-      <div className="mt-3 flex gap-4 text-xs text-muted">
-        <span>{w.exercises.length} exercises</span>
-        <span>{totalSets} sets</span>
-        {best > 0 && <span>best e1RM {best}kg</span>}
       </div>
     </button>
   );
@@ -71,48 +84,54 @@ export function RunCard({ r, onClick }: { r: Run; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-2xl bg-card border border-line p-4 active:opacity-80 transition"
+      className="w-full overflow-hidden rounded-2xl border border-line bg-card text-left transition active:scale-[0.99]"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex items-stretch">
+        <div className="flex w-14 shrink-0 items-center justify-center bg-accent2/10 text-accent2">
+          <IconRun width={24} height={24} />
+        </div>
+        <div className="min-w-0 flex-1 p-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-accent2">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent2 font-display">
               Cardio
             </span>
-            {r.planned && (
-              <span className="rounded-full bg-accent2/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent2">
-                Planned
+            {r.planned && <PlannedTag />}
+          </div>
+          <h3 className="mt-0.5 truncate text-lg font-bold uppercase leading-tight">
+            {r.activity}
+          </h3>
+          <p className="text-xs text-muted">{fmtDate(r.date)}</p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+            {r.distanceKm != null && (
+              <span>
+                <b className="font-display text-sm text-foreground">
+                  {r.distanceKm}
+                </b>{" "}
+                km
               </span>
             )}
+            {r.durationMin != null && (
+              <span>
+                <b className="font-display text-sm text-foreground">
+                  {r.durationMin}
+                </b>{" "}
+                min
+              </span>
+            )}
+            {r.distanceKm && r.durationMin && (
+              <span className="text-accent2">{pace(r.distanceKm, r.durationMin)}</span>
+            )}
           </div>
-          <h3 className="mt-0.5 font-semibold">{r.activity}</h3>
-          <p className="text-xs text-muted">{fmtDate(r.date)}</p>
         </div>
         {r.bodyweight && (
-          <div className="text-right">
-            <div className="text-sm font-semibold tabular-nums">
-              {r.bodyweight}kg
+          <div className="flex flex-col items-end justify-center pr-4 text-right">
+            <div className="font-display text-lg font-bold tabular-nums">
+              {r.bodyweight}
             </div>
-            <div className="text-[10px] text-muted">bodyweight</div>
-          </div>
-        )}
-      </div>
-      <div className="mt-3 flex gap-4 text-sm">
-        {r.distanceKm != null && (
-          <div>
-            <span className="font-semibold tabular-nums">{r.distanceKm}</span>
-            <span className="text-muted text-xs"> km</span>
-          </div>
-        )}
-        {r.durationMin != null && (
-          <div>
-            <span className="font-semibold tabular-nums">{r.durationMin}</span>
-            <span className="text-muted text-xs"> min</span>
-          </div>
-        )}
-        {r.distanceKm && r.durationMin && (
-          <div className="text-accent2 text-xs self-center">
-            {pace(r.distanceKm, r.durationMin)}
+            <div className="text-[9px] uppercase tracking-wider text-muted">
+              kg BW
+            </div>
           </div>
         )}
       </div>

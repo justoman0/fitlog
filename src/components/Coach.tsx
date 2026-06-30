@@ -5,6 +5,7 @@ import { AppData, Workout, Run } from "@/lib/types";
 import { uid } from "@/lib/store";
 import { todayISO, fmtDate, epley1RM, pace } from "@/lib/format";
 import { Button, Empty } from "./ui";
+import { IconCoach } from "./Icons";
 
 type Suggestion = {
   feedback: string;
@@ -169,8 +170,10 @@ export function Coach({
       )}
 
       {hasData && !sug && !loading && !error && (
-        <div className="rounded-2xl bg-card border border-line p-5 text-center space-y-4">
-          <div className="text-4xl">🤖</div>
+        <div className="rounded-2xl bg-card border border-line p-6 text-center space-y-4">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+            <IconCoach width={34} height={34} />
+          </div>
           <p className="text-sm text-muted">
             Get feedback on your latest session and a recommendation for
             tomorrow, built from your real numbers.
@@ -224,7 +227,7 @@ export function Coach({
                     disabled={loading}
                     className={`rounded-full px-4 py-2 text-sm transition active:scale-95 ${
                       choice === opt
-                        ? "bg-accent text-black font-semibold"
+                        ? "bg-accent text-[#1a0f04] font-bold"
                         : "bg-card2 border border-line"
                     }`}
                   >

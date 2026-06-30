@@ -70,7 +70,7 @@ export function RunForm({
               onClick={() => setActivity(a)}
               className={`rounded-full px-3.5 py-1.5 text-sm transition ${
                 activity === a
-                  ? "bg-accent text-black font-semibold"
+                  ? "bg-accent text-[#1a0f04] font-bold"
                   : "bg-card2 border border-line text-muted"
               }`}
             >

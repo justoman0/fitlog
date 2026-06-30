@@ -13,7 +13,7 @@ export function Confetti() {
     const dpr = window.devicePixelRatio || 1;
     const W = (canvas.width = canvas.offsetWidth * dpr);
     const H = (canvas.height = canvas.offsetHeight * dpr);
-    const colors = ["#4ade80", "#22d3ee", "#fbbf24", "#f472b6", "#a78bfa"];
+    const colors = ["#f97316", "#38bdf8", "#22c55e", "#fbbf24", "#f5f7fa"];
     const N = 150;
     const parts = Array.from({ length: N }, () => ({
       x: W / 2 + (Math.random() - 0.5) * W * 0.2,

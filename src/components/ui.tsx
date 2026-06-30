@@ -27,7 +27,7 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted">
+      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted font-display">
         {label}
       </span>
       {children}
@@ -36,7 +36,7 @@ export function Field({
 }
 
 const inputBase =
-  "w-full box-border min-h-[48px] rounded-xl bg-card2 border border-line px-3 py-2.5 text-foreground placeholder:text-muted outline-none focus:border-accent transition-colors";
+  "w-full box-border min-h-[48px] rounded-xl bg-card2 border border-line px-3.5 py-2.5 text-foreground placeholder:text-muted/60 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition";
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${inputBase} ${props.className ?? ""}`} />;
@@ -139,14 +139,15 @@ export function Button({
   variant?: "primary" | "ghost" | "danger";
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const styles = {
-    primary: "bg-accent text-black font-semibold active:opacity-80",
-    ghost: "bg-card2 border border-line text-foreground active:opacity-70",
+    primary:
+      "bg-gradient-to-b from-accent to-accent-deep text-[#1a0f04] font-bold shadow-lg shadow-accent/25 active:opacity-90",
+    ghost: "bg-card2 border border-line text-foreground active:bg-card",
     danger: "bg-card2 border border-line text-red-400 active:opacity-70",
   }[variant];
   return (
     <button
       {...props}
-      className={`rounded-xl px-4 py-2.5 text-sm transition active:scale-[0.98] disabled:opacity-40 ${styles} ${className}`}
+      className={`min-h-[48px] rounded-xl px-4 text-[15px] uppercase tracking-wide font-display transition active:scale-[0.98] disabled:opacity-40 ${styles} ${className}`}
     >
       {children}
     </button>
@@ -166,15 +167,17 @@ export function Stat({
 }) {
   return (
     <div className="rounded-2xl bg-card border border-line p-4">
-      <div className="text-xs uppercase tracking-wide text-muted">{label}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted font-display">
+        {label}
+      </div>
       <div
-        className={`mt-1 text-2xl font-bold tabular-nums ${
+        className={`mt-1 font-display text-4xl font-bold leading-none tabular-nums ${
           accent ? "text-accent" : ""
         }`}
       >
         {value}
       </div>
-      {sub && <div className="mt-0.5 text-xs text-muted">{sub}</div>}
+      {sub && <div className="mt-1.5 text-xs text-muted">{sub}</div>}
     </div>
   );
 }
