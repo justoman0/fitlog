@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { Workout, Run, WeightEntry, AppData } from "@/lib/types";
 import { fmtDate, todayISO } from "@/lib/format";
@@ -38,6 +38,7 @@ type SheetState =
   | { type: "viewWorkout"; w: Workout }
   | { type: "viewRun"; r: Run }
   | { type: "celebrate"; w: Workout }
+  | { type: "settings" }
   | { type: "menu" };
 
 function startOfWeek() {
@@ -53,6 +54,7 @@ export function App() {
   const [tab, setTab] = useState<Tab>("home");
   const [sheet, setSheet] = useState<SheetState>({ type: "none" });
   const [coachSignal, setCoachSignal] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const close = () => setSheet({ type: "none" });
 
   // combined timeline
@@ -109,6 +111,56 @@ export function App() {
   const delWeight = (id: string) =>
     update((d) => ({ ...d, weights: d.weights.filter((x) => x.id !== id) }));
 
+  const totalLogs =
+    data.workouts.length + data.runs.length + data.weights.length;
+
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `fitlog-backup-${todayISO()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        const inW = Array.isArray(parsed.workouts) ? parsed.workouts : [];
+        const inR = Array.isArray(parsed.runs) ? parsed.runs : [];
+        const inWt = Array.isArray(parsed.weights) ? parsed.weights : [];
+        let added = 0;
+        update((d) => {
+          const mergeById = <T extends { id: string }>(cur: T[], inc: T[]) => {
+            const ids = new Set(cur.map((x) => x.id));
+            const fresh = inc.filter((x) => x && x.id && !ids.has(x.id));
+            added += fresh.length;
+            return [...cur, ...fresh];
+          };
+          return {
+            workouts: mergeById(d.workouts, inW),
+            runs: mergeById(d.runs, inR),
+            weights: mergeById(d.weights, inWt),
+          };
+        });
+        alert(
+          `Backup restored ✓ Added ${added} new ${
+            added === 1 ? "entry" : "entries"
+          } (existing logs were kept).`
+        );
+        close();
+      } catch {
+        alert("Couldn't read that file — make sure it's a FitLog backup.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   if (!loaded)
     return <div className="min-h-screen bg-background" aria-hidden />;
 
@@ -125,9 +177,9 @@ export function App() {
           </p>
         </div>
         <button
-          onClick={() => setSheet({ type: "menu" })}
+          onClick={() => setSheet({ type: "settings" })}
           className="flex h-11 w-11 items-center justify-center rounded-xl bg-card border border-line text-muted active:bg-card2"
-          aria-label="Menu"
+          aria-label="Settings & backup"
         >
           <IconDots width={20} height={20} />
         </button>
@@ -199,6 +251,66 @@ export function App() {
 
       {/* sheets */}
       <Sheet open={sheet.type !== "none"} onClose={close}>
+        {sheet.type === "settings" && (
+          <div className="space-y-5 pb-2">
+            <div>
+              <h2 className="text-2xl font-bold uppercase tracking-wide">
+                Settings & backup
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                You have{" "}
+                <b className="text-foreground">{totalLogs}</b> logs saved (
+                {data.workouts.length} workouts · {data.runs.length} cardio ·{" "}
+                {data.weights.length} weigh-ins).
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-line bg-card p-4">
+              <h3 className="text-base font-bold uppercase tracking-wide">
+                Back up your data
+              </h3>
+              <p className="mt-1 text-xs text-muted">
+                Your logs are stored on this device. Save a backup file you can
+                keep safe or restore later.
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <Button onClick={exportData}>Export backup</Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Restore backup
+                </Button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) importData(f);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-line bg-card2/50 p-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-accent2" />
+                <h3 className="text-sm font-bold uppercase tracking-wide text-accent2">
+                  Cloud accounts — coming next
+                </h3>
+              </div>
+              <p className="mt-1.5 text-xs text-muted">
+                Soon you&apos;ll be able to log in so your data syncs across
+                devices and can never be lost. For now, export a backup
+                regularly to stay safe.
+              </p>
+            </div>
+          </div>
+        )}
+
         {sheet.type === "menu" && (
           <div className="pb-2">
             <h2 className="mb-4 text-2xl font-bold uppercase tracking-wide">
