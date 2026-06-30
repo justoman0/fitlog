@@ -1,9 +1,16 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { useAuthSync } from "@/lib/sync";
-import { Workout, Run, WeightEntry, AppData } from "@/lib/types";
+import {
+  Workout,
+  Run,
+  WeightEntry,
+  AppData,
+  Profile,
+  Strain,
+} from "@/lib/types";
 import { fmtDate, todayISO } from "@/lib/format";
 import { Stat, Empty, Button, Input } from "./ui";
 import { Sheet } from "./Sheet";
@@ -16,6 +23,8 @@ import { LineChart } from "./LineChart";
 import { Coach } from "./Coach";
 import { Progress } from "./Progress";
 import { Celebrate } from "./Celebrate";
+import { OnboardingForm } from "./OnboardingForm";
+import { StrainForm } from "./StrainForm";
 import {
   IconHome,
   IconHistory,
@@ -26,6 +35,7 @@ import {
   IconDumbbell,
   IconRun,
   IconScale,
+  IconBandage,
 } from "./Icons";
 
 type Tab = "home" | "history" | "progress" | "coach";
@@ -40,6 +50,8 @@ type SheetState =
   | { type: "viewRun"; r: Run }
   | { type: "celebrate"; w: Workout }
   | { type: "settings" }
+  | { type: "onboarding" }
+  | { type: "newStrain" }
   | { type: "menu" };
 
 function startOfWeek() {
@@ -120,6 +132,35 @@ export function App() {
     update((d) => ({ ...d, runs: d.runs.filter((x) => x.id !== id) }));
   const delWeight = (id: string) =>
     update((d) => ({ ...d, weights: d.weights.filter((x) => x.id !== id) }));
+  const saveProfile = (p: Profile) =>
+    update((d) => ({ ...d, profile: { ...d.profile, ...p } }));
+  const addStrain = (s: Strain) =>
+    update((d) => ({ ...d, strains: [...(d.strains ?? []), s] }));
+  const resolveStrain = (id: string) =>
+    update((d) => ({
+      ...d,
+      strains: (d.strains ?? []).map((s) =>
+        s.id === id ? { ...s, active: false } : s
+      ),
+    }));
+  const saveMemory = (notes: string) =>
+    update((d) => ({ ...d, coachMemory: { notes, updatedAt: Date.now() } }));
+
+  const activeStrains = (data.strains ?? []).filter((s) => s.active);
+
+  // First-open onboarding nudge (skippable)
+  const onboardingPrompted = useRef(false);
+  useEffect(() => {
+    if (
+      loaded &&
+      !data.profile?.onboarded &&
+      !onboardingPrompted.current &&
+      sheet.type === "none"
+    ) {
+      onboardingPrompted.current = true;
+      setSheet({ type: "onboarding" });
+    }
+  }, [loaded, data.profile?.onboarded, sheet.type]);
 
   const totalLogs =
     data.workouts.length + data.runs.length + data.weights.length;
@@ -219,6 +260,10 @@ export function App() {
             data={data}
             onSaveWorkout={saveWorkout}
             onSaveRun={saveRun}
+            onMemory={saveMemory}
+            activeStrains={activeStrains}
+            onResolveStrain={resolveStrain}
+            onAddStrain={() => setSheet({ type: "newStrain" })}
             runSignal={coachSignal}
           />
         )}
@@ -272,6 +317,30 @@ export function App() {
                 <b className="text-foreground">{totalLogs}</b> logs saved (
                 {data.workouts.length} workouts · {data.runs.length} cardio ·{" "}
                 {data.weights.length} weigh-ins).
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-line bg-card p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold uppercase tracking-wide">
+                  Coach profile
+                </h3>
+                <Button
+                  variant="ghost"
+                  className="px-4"
+                  onClick={() => setSheet({ type: "onboarding" })}
+                >
+                  Edit
+                </Button>
+              </div>
+              <p className="mt-1 text-xs text-muted">
+                {data.profile?.goals?.length
+                  ? `Goal: ${data.profile.goals.join(", ")}${
+                      data.profile.targetWeight
+                        ? ` · target ${data.profile.targetWeight}kg`
+                        : ""
+                    }`
+                  : "Not set yet — add your goals so the coach can tailor everything."}
               </p>
             </div>
 
@@ -437,8 +506,38 @@ export function App() {
                   setCoachSignal((n) => n + 1);
                 }}
               />
+              <MenuTile
+                icon={<IconBandage width={26} height={26} />}
+                label="Flag a niggle"
+                accent="danger"
+                onClick={() => setSheet({ type: "newStrain" })}
+              />
             </div>
           </div>
+        )}
+
+        {sheet.type === "onboarding" && (
+          <OnboardingForm
+            initial={data.profile}
+            onSave={(p) => {
+              saveProfile(p);
+              close();
+            }}
+            onSkip={() => {
+              saveProfile({ onboarded: true });
+              close();
+            }}
+          />
+        )}
+
+        {sheet.type === "newStrain" && (
+          <StrainForm
+            onSave={(s) => {
+              addStrain(s);
+              close();
+            }}
+            onCancel={close}
+          />
         )}
 
         {sheet.type === "newWorkout" && (
@@ -697,13 +796,14 @@ function MenuTile({
 }: {
   icon: React.ReactNode;
   label: string;
-  accent: "accent" | "accent2" | "success";
+  accent: "accent" | "accent2" | "success" | "danger";
   onClick: () => void;
 }) {
   const ring = {
     accent: "text-accent",
     accent2: "text-accent2",
     success: "text-success",
+    danger: "text-red-400",
   }[accent];
   return (
     <button
@@ -718,7 +818,7 @@ function MenuTile({
   );
 }
 
-function upsert<K extends keyof AppData>(
+function upsert<K extends "workouts" | "runs" | "weights">(
   d: AppData,
   key: K,
   item: AppData[K][number]

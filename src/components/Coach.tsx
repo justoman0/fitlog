@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppData, Workout, Run } from "@/lib/types";
+import { AppData, Workout, Run, Strain } from "@/lib/types";
 import { uid } from "@/lib/store";
 import { todayISO, fmtDate, epley1RM, pace } from "@/lib/format";
 import { Button, Empty } from "./ui";
@@ -12,6 +12,7 @@ type Suggestion = {
   recommendation: string;
   question: string;
   options: string[];
+  memoryUpdate?: string;
 };
 
 type Plan = {
@@ -37,11 +38,19 @@ export function Coach({
   data,
   onSaveWorkout,
   onSaveRun,
+  onMemory,
+  activeStrains,
+  onResolveStrain,
+  onAddStrain,
   runSignal,
 }: {
   data: AppData;
   onSaveWorkout: (w: Workout) => void;
   onSaveRun: (r: Run) => void;
+  onMemory: (notes: string) => void;
+  activeStrains: Strain[];
+  onResolveStrain: (id: string) => void;
+  onAddStrain: () => void;
   runSignal: number;
 }) {
   const [loading, setLoading] = useState(false);
@@ -83,6 +92,7 @@ export function Coach({
     try {
       const s = (await call({ mode: "suggest", ...data })) as Suggestion;
       setSug(s);
+      if (s.memoryUpdate && s.memoryUpdate.trim()) onMemory(s.memoryUpdate.trim());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -159,6 +169,42 @@ export function Coach({
           <button onClick={reset} className="text-xs text-muted active:opacity-60">
             Reset
           </button>
+        )}
+      </div>
+
+      {/* Active niggles — the coach trains around these */}
+      <div className="rounded-2xl border border-line bg-card p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted font-display">
+            Active niggles
+          </span>
+          <button
+            onClick={onAddStrain}
+            className="rounded-full border border-red-400/40 bg-red-400/10 px-2.5 py-1 text-xs font-semibold text-red-400 active:opacity-70"
+          >
+            + Flag a niggle
+          </button>
+        </div>
+        {activeStrains.length === 0 ? (
+          <p className="mt-1.5 text-xs text-muted">
+            None — coach is training you at full send. Flag any pain and it&apos;ll
+            route around it.
+          </p>
+        ) : (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {activeStrains.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => onResolveStrain(s.id)}
+                className="flex items-center gap-1.5 rounded-full bg-red-400/15 px-3 py-1.5 text-xs text-red-300 active:opacity-70"
+                title="Tap when healed"
+              >
+                <span className="font-semibold">{s.area}</span>
+                {s.severity && <span className="opacity-70">· {s.severity}</span>}
+                <span className="opacity-60">✓ healed?</span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

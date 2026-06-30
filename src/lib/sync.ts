@@ -14,10 +14,18 @@ function unionById<T extends { id: string }>(a: T[], b: T[]): T[] {
 }
 
 function mergeData(a: AppData, b: AppData): AppData {
+  // For singletons (profile, coachMemory) keep whichever was updated last;
+  // default to local (a) when we can't tell.
+  const memA = a.coachMemory?.updatedAt ?? 0;
+  const memB = b.coachMemory?.updatedAt ?? 0;
+  const aOnboarded = a.profile?.onboarded;
   return {
     workouts: unionById(a.workouts, b.workouts),
     runs: unionById(a.runs, b.runs),
     weights: unionById(a.weights, b.weights),
+    strains: unionById(a.strains ?? [], b.strains ?? []),
+    profile: aOnboarded ? a.profile : b.profile?.onboarded ? b.profile : a.profile,
+    coachMemory: memB > memA ? b.coachMemory : a.coachMemory,
   };
 }
 

@@ -15,6 +15,9 @@ export function loadData(): AppData {
       workouts: parsed.workouts ?? [],
       runs: parsed.runs ?? [],
       weights: parsed.weights ?? [],
+      profile: parsed.profile ?? {},
+      strains: parsed.strains ?? [],
+      coachMemory: parsed.coachMemory ?? { notes: "" },
     };
   } catch {
     return emptyData;

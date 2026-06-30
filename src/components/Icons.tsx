@@ -93,6 +93,13 @@ export const IconFlame = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const IconBandage = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <rect x="2.5" y="8" width="19" height="8" rx="4" transform="rotate(-45 12 12)" />
+    <path d="M12 10v4M10 12h4" />
+  </svg>
+);
+
 export const IconDots = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}>
     <circle cx="5" cy="12" r="1.5" />
