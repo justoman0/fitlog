@@ -94,26 +94,40 @@ export function useAuthSync(
     }, 1200);
   }, [data, user]);
 
-  const signIn = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: true },
-    });
-    return error?.message ?? null;
-  }, []);
+  // One smart action: sign in if the account exists, otherwise create it.
+  const authenticate = useCallback(
+    async (emailRaw: string, password: string) => {
+      const email = emailRaw.trim();
+      const signInRes = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (!signInRes.error) return null;
 
-  const verifyCode = useCallback(async (email: string, token: string) => {
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: token.trim(),
-      type: "email",
-    });
-    return error?.message ?? null;
-  }, []);
+      const msg = signInRes.error.message.toLowerCase();
+      // Likely a brand-new account → create it.
+      if (msg.includes("invalid") || msg.includes("credentials")) {
+        const signUpRes = await supabase.auth.signUp({ email, password });
+        if (!signUpRes.error) {
+          if (!signUpRes.data.session) {
+            return "Account created — now tap Sign in again to log in.";
+          }
+          return null;
+        }
+        const upMsg = signUpRes.error.message.toLowerCase();
+        if (upMsg.includes("already") || upMsg.includes("registered")) {
+          return "Wrong password for this email.";
+        }
+        return signUpRes.error.message;
+      }
+      return signInRes.error.message;
+    },
+    []
+  );
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
   }, []);
 
-  return { user, status, signIn, verifyCode, signOut };
+  return { user, status, authenticate, signOut };
 }
