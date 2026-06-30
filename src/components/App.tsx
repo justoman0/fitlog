@@ -57,9 +57,15 @@ export function App() {
   const [coachSignal, setCoachSignal] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [authEmail, setAuthEmail] = useState("");
+  const [authCode, setAuthCode] = useState("");
   const [linkSent, setLinkSent] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const { user, status, signIn, signOut } = useAuthSync(data, update, loaded);
+  const [verifying, setVerifying] = useState(false);
+  const { user, status, signIn, verifyCode, signOut } = useAuthSync(
+    data,
+    update,
+    loaded
+  );
   const close = () => setSheet({ type: "none" });
 
   // combined timeline
@@ -350,22 +356,59 @@ export function App() {
               ) : linkSent ? (
                 <div className="mt-2">
                   <p className="text-sm">
-                    📧 Check your email — tap the magic link to sign in. Your
-                    current logs will upload automatically once you&apos;re in.
+                    We emailed a <b>6-digit code</b> to{" "}
+                    <b className="break-all">{authEmail}</b>. Enter it below.
                   </p>
-                  <Button
-                    variant="ghost"
-                    className="mt-3 w-full"
-                    onClick={() => setLinkSent(false)}
-                  >
-                    Use a different email
-                  </Button>
+                  <div className="mt-3 space-y-2">
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="123456"
+                      maxLength={6}
+                      value={authCode}
+                      onChange={(e) =>
+                        setAuthCode(e.target.value.replace(/\D/g, ""))
+                      }
+                      className="text-center text-2xl tracking-[0.4em] font-display"
+                    />
+                    {authError && (
+                      <p className="text-xs text-red-400">{authError}</p>
+                    )}
+                    <Button
+                      className="w-full"
+                      disabled={authCode.length < 6 || verifying}
+                      onClick={async () => {
+                        setVerifying(true);
+                        setAuthError(null);
+                        const err = await verifyCode(authEmail, authCode);
+                        setVerifying(false);
+                        if (err) setAuthError(err);
+                        else {
+                          setLinkSent(false);
+                          setAuthCode("");
+                        }
+                      }}
+                    >
+                      {verifying ? "Verifying…" : "Verify & sign in"}
+                    </Button>
+                    <button
+                      onClick={() => {
+                        setLinkSent(false);
+                        setAuthCode("");
+                        setAuthError(null);
+                      }}
+                      className="w-full py-1 text-xs text-muted active:opacity-60"
+                    >
+                      Use a different email
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="mt-2">
                   <p className="text-xs text-muted">
                     Log in to sync your data across devices so it can never be
-                    lost. We&apos;ll email you a one-tap link — no password.
+                    lost. We&apos;ll email you a 6-digit code — no password.
                   </p>
                   <div className="mt-3 space-y-2">
                     <Input
@@ -388,7 +431,7 @@ export function App() {
                         else setLinkSent(true);
                       }}
                     >
-                      Send magic link
+                      Send code
                     </Button>
                   </div>
                 </div>

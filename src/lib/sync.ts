@@ -95,11 +95,18 @@ export function useAuthSync(
   }, [data, user]);
 
   const signIn = useCallback(async (email: string) => {
-    const redirect =
-      typeof window !== "undefined" ? window.location.origin : undefined;
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: redirect },
+      options: { shouldCreateUser: true },
+    });
+    return error?.message ?? null;
+  }, []);
+
+  const verifyCode = useCallback(async (email: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: token.trim(),
+      type: "email",
     });
     return error?.message ?? null;
   }, []);
@@ -108,5 +115,5 @@ export function useAuthSync(
     await supabase.auth.signOut();
   }, []);
 
-  return { user, status, signIn, signOut };
+  return { user, status, signIn, verifyCode, signOut };
 }
